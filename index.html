@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ꦗꦮꦤꦺꦱꦺ Script Translator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="title">ꦗꦮꦤꦺꦱꦺ Script Translator</h1>
+            <div class="header-controls">
+                <button class="btn-help" onclick="showHelp()">ℹ️ Help</button>
+                <label class="debug-toggle">
+                    <input type="checkbox" id="debugMode" onchange="toggleDebug()">
+                    <span>🔍 Debug Mode</span>
+                </label>
+            </div>
+        </header>
+
+        <!-- Input Section -->
+        <div class="card input-card">
+            <div class="card-header">
+                <h2>Input (Javanese Script)</h2>
+                <div class="example-buttons">
+                    <button class="btn-example" onclick="loadExample('ꦲꦏꦸ ꦩꦔꦤ꧀ ꦱꦼꦒ')">Example 1</button>
+                    <button class="btn-example" onclick="loadExample('ꦢꦺꦮꦺꦏꦺ ꦩ꧀ꦭꦏꦸ')">Example 2</button>
+                    <button class="btn-example" onclick="loadExample('ꦱꦸꦒꦺꦁ ꦄꦮꦤ꧀')">Example 3</button>
+                </div>
+            </div>
+            <textarea 
+                id="inputText" 
+                class="input-textarea" 
+                placeholder="Type or paste Javanese script here..."
+                rows="4"
+            ></textarea>
+            <div class="button-group">
+                <button class="btn-clear" onclick="clearAll()">Clear</button>
+                <button class="btn-translate" onclick="translate()" id="translateBtn">
+                    Translate →
+                </button>
+            </div>
+        </div>
+
+        <!-- Output Section -->
+        <div class="output-row">
+            <div class="card output-card">
+                <h2>Latin Transliteration</h2>
+                <div id="latinOutput" class="output-text"></div>
+            </div>
+            <div class="card output-card">
+                <h2>English Translation</h2>
+                <div id="englishOutput" class="output-text"></div>
+            </div>
+        </div>
+
+        <!-- Analysis Section -->
+        <div class="card analysis-card">
+            <h2>Word Analysis</h2>
+            <div class="table-container">
+                <table id="analysisTable" class="analysis-table">
+                    <thead>
+                        <tr>
+                            <th>Word</th>
+                            <th>Meaning</th>
+                            <th>POS</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="analysisBody">
+                        <tr class="empty-row">
+                            <td colspan="4">No analysis available. Enter text and translate to see word analysis.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Debug Output Section (hidden by default) -->
+        <div class="card debug-card" id="debugCard" style="display: none;">
+            <div class="debug-header">
+                <h2>Debug Output</h2>
+                <button class="btn-copy" onclick="copyDebugOutput()">📋 Copy</button>
+            </div>
+            <div class="debug-tabs">
+                <button class="debug-tab active" onclick="showDebugTab('output')">Console Output</button>
+                <button class="debug-tab" onclick="showDebugTab('tokens')">Tokens</button>
+                <button class="debug-tab" onclick="showDebugTab('ast')">AST</button>
+                <button class="debug-tab" onclick="showDebugTab('bytecode')">Bytecode</button>
+                <button class="debug-tab" onclick="showDebugTab('morphology')">Morphology</button>
+            </div>
+            <div id="debugOutput" class="debug-content">
+                <pre id="debugText" class="debug-text"></pre>
+            </div>
+            <div id="debugTokens" class="debug-content" style="display: none;">
+                <div class="table-container">
+                    <table class="debug-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Type</th>
+                                <th>Value</th>
+                                <th>Latin</th>
+                                <th>Position</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tokensBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="debugAST" class="debug-content" style="display: none;">
+                <pre id="astText" class="debug-text"></pre>
+            </div>
+            <div id="debugBytecode" class="debug-content" style="display: none;">
+                <div class="table-container">
+                    <table class="debug-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Opcode</th>
+                                <th>Operand</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bytecodeBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="debugMorphology" class="debug-content" style="display: none;">
+                <div id="morphologyContent"></div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar" id="statusBar">
+            Ready
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeHelp()">&times;</span>
+            <h2>Help</h2>
+            <div class="help-content">
+                <h3>How to Use</h3>
+                <ol>
+                    <li>Type or paste Javanese script in the input area</li>
+                    <li>Click 'Translate' or press Ctrl+Enter</li>
+                    <li>View results in Latin and English sections</li>
+                    <li>Check word analysis for detailed breakdown</li>
+                </ol>
+                
+                <h3>Keyboard Shortcuts</h3>
+                <ul>
+                    <li><strong>Ctrl+Enter</strong> or <strong>Ctrl+R</strong>: Translate</li>
+                    <li>Use example buttons to load sample texts</li>
+                </ul>
+                
+                <h3>Features</h3>
+                <ul>
+                    <li>Real-time translation from Javanese script</li>
+                    <li>Morphological analysis of words</li>
+                    <li>Dictionary lookup status</li>
+                    <li>Debug mode for detailed processing info</li>
+                </ul>
+                
+                <h3>Tips</h3>
+                <ul>
+                    <li>Debug mode shows detailed compilation steps in console</li>
+                    <li>Green checkmark (✓) = word found in dictionary</li>
+                    <li>Question mark (?) = word not in dictionary</li>
+                    <li>Click example buttons to try sample translations</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
