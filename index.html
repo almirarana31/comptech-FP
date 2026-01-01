@@ -24,18 +24,33 @@
         <div class="card input-card">
             <div class="card-header">
                 <h2>Input (Javanese Script)</h2>
+                <div class="input-mode-toggle">
+                    <label class="mode-option">
+                        <input type="radio" name="inputMode" value="examples" checked onchange="toggleInputMode()">
+                        <span>Use Examples</span>
+                    </label>
+                    <label class="mode-option">
+                        <input type="radio" name="inputMode" value="custom" onchange="toggleInputMode()">
+                        <span>Enter Custom Text</span>
+                    </label>
+                </div>
+            </div>
+            <div id="examplesSection" class="examples-section">
                 <div class="example-buttons">
                     <button class="btn-example" onclick="loadExample('ꦲꦏꦸ ꦩꦔꦤ꧀ ꦱꦼꦒ')">Example 1</button>
                     <button class="btn-example" onclick="loadExample('ꦢꦺꦮꦺꦏꦺ ꦩ꧀ꦭꦏꦸ')">Example 2</button>
                     <button class="btn-example" onclick="loadExample('ꦱꦸꦒꦺꦁ ꦄꦮꦤ꧀')">Example 3</button>
                 </div>
             </div>
-            <textarea 
-                id="inputText" 
-                class="input-textarea" 
-                placeholder="Type or paste Javanese script here..."
-                rows="4"
-            ></textarea>
+            <div id="customSection" class="custom-section" style="display: none;">
+                <textarea 
+                    id="inputText" 
+                    class="input-textarea" 
+                    placeholder="Type or paste Javanese script here... (Press Enter to translate)"
+                    rows="4"
+                    onkeydown="handleTextareaKeydown(event)"
+                ></textarea>
+            </div>
             <div class="button-group">
                 <button class="btn-clear" onclick="clearAll()">Clear</button>
                 <button class="btn-translate" onclick="translate()" id="translateBtn">

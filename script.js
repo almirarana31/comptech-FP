@@ -5,6 +5,16 @@ const API_URL = 'http://localhost:5000/translate';
 let isTranslating = false;
 let debugMode = false;
 
+// Handle textarea keydown events
+function handleTextareaKeydown(event) {
+    // Auto-translate on Enter (but allow Shift+Enter for new line)
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        console.log('Enter key pressed, translating...');
+        translate();
+    }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
     // Keyboard shortcuts
@@ -17,16 +27,71 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Auto-resize textarea
     const textarea = document.getElementById('inputText');
-    textarea.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-    });
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    }
+    
+    // Ensure translate button has event listener (backup to onclick)
+    const translateBtn = document.getElementById('translateBtn');
+    if (translateBtn) {
+        translateBtn.addEventListener('click', function(e) {
+            console.log('Translate button clicked');
+            e.preventDefault();
+            translate();
+        });
+    }
 });
+
+// Toggle input mode between examples and custom text
+function toggleInputMode() {
+    const examplesSection = document.getElementById('examplesSection');
+    const customSection = document.getElementById('customSection');
+    const inputModeRadio = document.querySelector('input[name="inputMode"]:checked');
+    
+    if (!inputModeRadio) {
+        console.error('No input mode selected');
+        return;
+    }
+    
+    const inputMode = inputModeRadio.value;
+    
+    if (inputMode === 'examples') {
+        if (examplesSection) examplesSection.style.display = 'block';
+        if (customSection) customSection.style.display = 'none';
+        // Clear custom text when switching to examples
+        const textarea = document.getElementById('inputText');
+        if (textarea) textarea.value = '';
+    } else {
+        if (examplesSection) examplesSection.style.display = 'none';
+        if (customSection) customSection.style.display = 'block';
+        // Focus on textarea when switching to custom
+        setTimeout(() => {
+            const textarea = document.getElementById('inputText');
+            if (textarea) {
+                textarea.focus();
+                // Ensure textarea is visible and accessible
+                textarea.style.display = 'block';
+            }
+        }, 100);
+    }
+}
 
 // Load example text
 function loadExample(text) {
-    document.getElementById('inputText').value = text;
-    translate();
+    // Switch to custom mode and load the example text
+    document.querySelector('input[name="inputMode"][value="custom"]').checked = true;
+    toggleInputMode();
+    const textarea = document.getElementById('inputText');
+    if (textarea) {
+        textarea.value = text;
+        // Small delay to ensure UI is updated
+        setTimeout(() => {
+            translate();
+        }, 100);
+    }
 }
 
 // Clear all
@@ -339,15 +404,43 @@ function escapeHtml(text) {
 
 // Main translate function
 async function translate() {
-    const inputText = document.getElementById('inputText').value.trim();
+    // Get input text - textarea is always in DOM, just might be hidden
+    const inputTextElement = document.getElementById('inputText');
+    if (!inputTextElement) {
+        console.error('Input textarea not found');
+        updateStatus('Error: Input field not found', true);
+        return;
+    }
+    
+    let inputText = inputTextElement.value.trim();
     const translateBtn = document.getElementById('translateBtn');
+    
+    if (!translateBtn) {
+        console.error('Translate button not found');
+        updateStatus('Error: Translate button not found', true);
+        return;
+    }
     
     if (!inputText) {
         updateStatus('Please enter Javanese text to translate', true);
         return;
     }
     
+    // If we're in examples mode but have text, switch to custom mode
+    const inputMode = document.querySelector('input[name="inputMode"]:checked');
+    if (inputMode && inputMode.value === 'examples' && inputText) {
+        // Switch to custom mode to show the text
+        const customModeRadio = document.querySelector('input[name="inputMode"][value="custom"]');
+        if (customModeRadio) {
+            customModeRadio.checked = true;
+            toggleInputMode();
+            // Re-read the text after mode switch
+            inputText = inputTextElement.value.trim();
+        }
+    }
+    
     if (isTranslating) {
+        console.log('Translation already in progress');
         return;
     }
     

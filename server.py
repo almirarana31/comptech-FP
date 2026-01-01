@@ -9,6 +9,7 @@ from ct import Translator, Lexer, TokenType
 import sys
 import io
 from contextlib import redirect_stdout
+from enum import Enum
 
 app = Flask(__name__, static_folder='.', static_url_path='')
 CORS(app)  # Enable CORS for local development
@@ -84,7 +85,6 @@ def translate():
         # Capture debug output if debug mode is enabled
         if debug:
             output_capture = OutputCapture()
-            import sys
             old_stdout = sys.stdout
             
             try:
@@ -156,12 +156,15 @@ def translate():
                 'operand': instr.operand
             } for instr in bytecode]
         
+        # Serialize analysis data to JSON-serializable format
+        analysis_data = format_analysis_for_json(result.get('analysis', {'words': []}))
+        
         # Return JSON response with all debug information
         response_data = {
             'javanese': result.get('javanese', ''),
             'latin': result.get('latin', ''),
             'english': result.get('english', ''),
-            'analysis': result.get('analysis', {'words': []}),
+            'analysis': analysis_data,
             'errors': errors
         }
         
@@ -210,6 +213,41 @@ def format_ast_for_json(ast_node):
         'value': ast_node.value,
         'children': [format_ast_for_json(child) for child in ast_node.children]
     }
+
+def format_analysis_for_json(analysis):
+    """Convert analysis data to JSON-serializable format"""
+    if not analysis or 'words' not in analysis:
+        return {'words': []}
+    
+    words_serialized = []
+    for word_info in analysis['words']:
+        word_dict = {
+            'word': word_info.get('word', ''),
+            'meaning': word_info.get('meaning', ''),
+            'pos': word_info.get('pos', ''),
+            'in_dictionary': word_info.get('in_dictionary', False),
+            'morphology': None
+        }
+        
+        # Serialize morphology if present
+        if word_info.get('morphology'):
+            morph = word_info['morphology']
+            word_dict['morphology'] = {
+                'root': morph.root if hasattr(morph, 'root') else '',
+                'morphemes': [
+                    {
+                        'type': m.type.value if isinstance(m.type, Enum) else str(m.type),
+                        'value': m.value,
+                        'meaning': m.meaning
+                    }
+                    for m in (morph.morphemes if hasattr(morph, 'morphemes') else [])
+                ],
+                'features': dict(morph.features) if hasattr(morph, 'features') else {}
+            }
+        
+        words_serialized.append(word_dict)
+    
+    return {'words': words_serialized}
 
 if __name__ == '__main__':
     print("=" * 70)
